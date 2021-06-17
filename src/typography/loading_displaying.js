@@ -7,7 +7,7 @@
 
 import p5 from '../core/main';
 import * as constants from '../core/constants';
-import * as opentype from 'opentype.js';
+import Canvas from "node-canvas"
 
 import '../core/friendly_errors/validate_params';
 import '../core/friendly_errors/file_errors';
@@ -84,58 +84,7 @@ import '../core/friendly_errors/fes_core';
  * p5*js in p5's theme dark pink
  * p5*js in p5's theme dark pink
  */
-p5.prototype.loadFont = function(path, onSuccess, onError) {
-  p5._validateParameters('loadFont', arguments);
-  const p5Font = new p5.Font(this);
-
-  const self = this;
-  opentype.load(path, (err, font) => {
-    if (err) {
-      p5._friendlyFileLoadError(4, path);
-      if (typeof onError !== 'undefined') {
-        return onError(err);
-      }
-      console.error(err, path);
-      return;
-    }
-
-    p5Font.font = font;
-
-    if (typeof onSuccess !== 'undefined') {
-      onSuccess(p5Font);
-    }
-
-    self._decrementPreload();
-
-    // check that we have an acceptable font type
-    const validFontTypes = ['ttf', 'otf', 'woff', 'woff2'];
-
-    const fileNoPath = path
-      .split('\\')
-      .pop()
-      .split('/')
-      .pop();
-
-    const lastDotIdx = fileNoPath.lastIndexOf('.');
-    let fontFamily;
-    let newStyle;
-    const fileExt = lastDotIdx < 1 ? null : fileNoPath.substr(lastDotIdx + 1);
-
-    // if so, add it to the DOM (name-only) for use with DOM module
-    if (validFontTypes.includes(fileExt)) {
-      fontFamily = fileNoPath.substr(0, lastDotIdx);
-      newStyle = document.createElement('style');
-      newStyle.appendChild(
-        document.createTextNode(
-          `\n@font-face {\nfont-family: ${fontFamily};\nsrc: url(${path});\n}\n`
-        )
-      );
-      document.head.appendChild(newStyle);
-    }
-  });
-
-  return p5Font;
-};
+p5.prototype.loadFont = Canvas.registerFont
 
 /**
  * Draws text to the screen. Displays the information specified in the first

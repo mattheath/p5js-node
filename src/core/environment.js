@@ -8,14 +8,14 @@
 
 import p5 from './main';
 import * as C from './constants';
+import {performance} from 'perf_hooks'
 
 const standardCursors = [C.ARROW, C.CROSS, C.HAND, C.MOVE, C.TEXT, C.WAIT];
 
 p5.prototype._frameRate = 0;
-p5.prototype._lastFrameTime = window.performance.now();
+p5.prototype._lastFrameTime = performance.now();
 p5.prototype._targetFrameRate = 60;
 
-const _windowPrint = window.print;
 
 /**
  * The <a href="#/p5/print">print()</a> function writes to the console area of
@@ -24,7 +24,7 @@ const _windowPrint = window.print;
  * the function. Individual elements can be separated with quotes ("") and joined
  * with the addition operator (+).
  *
- * Note that calling print() without any arguments invokes the window.print()
+ * Note that calling print() without any arguments invokes the print()
  * function which opens the browser's print dialog. To print a blank line
  * to console you can write print('\n').
  *
@@ -42,9 +42,7 @@ const _windowPrint = window.print;
  * default grey canvas
  */
 p5.prototype.print = function(...args) {
-  if (!args.length) {
-    _windowPrint();
-  } else {
+  if (args.length) {
     console.log(...args);
   }
 };
@@ -155,75 +153,8 @@ p5.prototype.deltaTime = 0;
  * @alt
  * green 50x50 ellipse at top left. Red X covers canvas when page focus changes
  */
-p5.prototype.focused = document.hasFocus();
+p5.prototype.focused = true
 
-/**
- * Sets the cursor to a predefined symbol or an image, or makes it visible
- * if already hidden. If you are trying to set an image as the cursor, the
- * recommended size is 16x16 or 32x32 pixels. The values for parameters x and y
- * must be less than the dimensions of the image.
- *
- * @method cursor
- * @param {String|Constant} type Built-In: either ARROW, CROSS, HAND, MOVE, TEXT and WAIT
- *                               Native CSS properties: 'grab', 'progress', 'cell' etc.
- *                               External: path for cursor's images
- *                               (Allowed File extensions: .cur, .gif, .jpg, .jpeg, .png)
- *                               For more information on Native CSS cursors and url visit:
- *                               https://developer.mozilla.org/en-US/docs/Web/CSS/cursor
- * @param {Number}          [x]  the horizontal active spot of the cursor (must be less than 32)
- * @param {Number}          [y]  the vertical active spot of the cursor (must be less than 32)
- * @example
- * <div><code>
- * // Move the mouse across the quadrants
- * // to see the cursor change
- * function draw() {
- *   line(width / 2, 0, width / 2, height);
- *   line(0, height / 2, width, height / 2);
- *   if (mouseX < 50 && mouseY < 50) {
- *     cursor(CROSS);
- *   } else if (mouseX > 50 && mouseY < 50) {
- *     cursor('progress');
- *   } else if (mouseX > 50 && mouseY > 50) {
- *     cursor('https://avatars0.githubusercontent.com/u/1617169?s=16');
- *   } else {
- *     cursor('grab');
- *   }
- * }
- * </code></div>
- *
- * @alt
- * canvas is divided into four quadrants. cursor on first is a cross, second is a progress,
- * third is a custom cursor using path to the cursor and fourth is a grab.
- */
-p5.prototype.cursor = function(type, x, y) {
-  let cursor = 'auto';
-  const canvas = this._curElement.elt;
-  if (standardCursors.includes(type)) {
-    // Standard css cursor
-    cursor = type;
-  } else if (typeof type === 'string') {
-    let coords = '';
-    if (x && y && (typeof x === 'number' && typeof y === 'number')) {
-      // Note that x and y values must be unit-less positive integers < 32
-      // https://developer.mozilla.org/en-US/docs/Web/CSS/cursor
-      coords = `${x} ${y}`;
-    }
-    if (
-      type.substring(0, 7) === 'http://' ||
-      type.substring(0, 8) === 'https://'
-    ) {
-      // Image (absolute url)
-      cursor = `url(${type}) ${coords}, auto`;
-    } else if (/\.(cur|jpg|jpeg|gif|png|CUR|JPG|JPEG|GIF|PNG)$/.test(type)) {
-      // Image file (relative path) - Separated for performance reasons
-      cursor = `url(${type}) ${coords}, auto`;
-    } else {
-      // Any valid string for the css cursor property
-      cursor = type;
-    }
-  }
-  canvas.style.cursor = cursor;
-};
 
 /**
  * Specifies the number of frames to be displayed every second. For example,
@@ -329,29 +260,6 @@ p5.prototype.setFrameRate = function(fps) {
 };
 
 /**
- * Hides the cursor from view.
- *
- * @method noCursor
- * @example
- * <div><code>
- * function setup() {
- *   noCursor();
- * }
- *
- * function draw() {
- *   background(200);
- *   ellipse(mouseX, mouseY, 10, 10);
- * }
- * </code></div>
- *
- * @alt
- * cursor becomes 10x 10 white ellipse the moves with mouse x and y.
- */
-p5.prototype.noCursor = function() {
-  this._curElement.elt.style.cursor = 'none';
-};
-
-/**
  * System variable that stores the width of the screen display according to The
  * default <a href="#/p5/pixelDensity">pixelDensity</a>. This is used to run a
  * full-screen program on any display size. To return actual screen size,
@@ -367,7 +275,11 @@ p5.prototype.noCursor = function() {
  * @alt
  * This example does not render anything.
  */
-p5.prototype.displayWidth = screen.width;
+Object.defineProperty(p5.prototype, "displayWidth", {
+    get: function() {
+        return this.canvas.width
+    }
+});
 
 /**
  * System variable that stores the height of the screen display according to The
@@ -385,7 +297,11 @@ p5.prototype.displayWidth = screen.width;
  * @alt
  * This example does not render anything.
  */
-p5.prototype.displayHeight = screen.height;
+Object.defineProperty(p5.prototype, "displayHeight", {
+    get: function() {
+        return this.canvas.height
+    }
+});
 
 /**
  * System variable that stores the width of the inner window, it maps to
@@ -401,7 +317,12 @@ p5.prototype.displayHeight = screen.height;
  * @alt
  * This example does not render anything.
  */
-p5.prototype.windowWidth = getWindowWidth();
+Object.defineProperty(p5.prototype, "windowWidth", {
+    get: function() {
+        return this.canvas.width
+    }
+});
+
 /**
  * System variable that stores the height of the inner window, it maps to
  * window.innerHeight.
@@ -416,7 +337,11 @@ p5.prototype.windowWidth = getWindowWidth();
  * @alt
  * This example does not render anything.
  */
-p5.prototype.windowHeight = getWindowHeight();
+Object.defineProperty(p5.prototype, "windowHeight", {
+    get: function() {
+        return this.canvas.height
+    }
+});
 
 /**
  * The <a href="#/p5/windowResized">windowResized()</a> function is called once
@@ -443,9 +368,7 @@ p5.prototype.windowHeight = getWindowHeight();
  * This example does not render anything.
  */
 p5.prototype._onresize = function(e) {
-  this._setProperty('windowWidth', getWindowWidth());
-  this._setProperty('windowHeight', getWindowHeight());
-  const context = this._isGlobal ? window : this;
+  const context = this;
   let executeDefault;
   if (typeof context.windowResized === 'function') {
     executeDefault = context.windowResized(e);
@@ -455,23 +378,6 @@ p5.prototype._onresize = function(e) {
   }
 };
 
-function getWindowWidth() {
-  return (
-    window.innerWidth ||
-    (document.documentElement && document.documentElement.clientWidth) ||
-    (document.body && document.body.clientWidth) ||
-    0
-  );
-}
-
-function getWindowHeight() {
-  return (
-    window.innerHeight ||
-    (document.documentElement && document.documentElement.clientHeight) ||
-    (document.body && document.body.clientHeight) ||
-    0
-  );
-}
 
 /**
  * System variable that stores the width of the drawing canvas. This value
@@ -497,55 +403,7 @@ p5.prototype.width = 0;
  */
 p5.prototype.height = 0;
 
-/**
- * If argument is given, sets the sketch to fullscreen or not based on the
- * value of the argument. If no argument is given, returns the current
- * fullscreen state. Note that due to browser restrictions this can only
- * be called on user input, for example, on mouse press like the example
- * below.
- *
- * @method fullscreen
- * @param  {Boolean} [val] whether the sketch should be in fullscreen mode
- * or not
- * @return {Boolean} current fullscreen state
- * @example
- * <div>
- * <code>
- * // Clicking in the box toggles fullscreen on and off.
- * function setup() {
- *   background(200);
- * }
- * function mousePressed() {
- *   if (mouseX > 0 && mouseX < 100 && mouseY > 0 && mouseY < 100) {
- *     let fs = fullscreen();
- *     fullscreen(!fs);
- *   }
- * }
- * </code>
- * </div>
- *
- * @alt
- * This example does not render anything.
- */
-p5.prototype.fullscreen = function(val) {
-  p5._validateParameters('fullscreen', arguments);
-  // no arguments, return fullscreen or not
-  if (typeof val === 'undefined') {
-    return (
-      document.fullscreenElement ||
-      document.webkitFullscreenElement ||
-      document.mozFullScreenElement ||
-      document.msFullscreenElement
-    );
-  } else {
-    // otherwise set to fullscreen or not
-    if (val) {
-      launchFullscreen(document.documentElement);
-    } else {
-      exitFullscreen();
-    }
-  }
-};
+
 
 /**
  * Sets the pixel scaling for high pixel density displays. By default
@@ -590,15 +448,14 @@ p5.prototype.fullscreen = function(val) {
 p5.prototype.pixelDensity = function(val) {
   p5._validateParameters('pixelDensity', arguments);
   let returnValue;
-  if (typeof val === 'number') {
-    if (val !== this._pixelDensity) {
-      this._pixelDensity = val;
-    }
-    returnValue = this;
-    this.resizeCanvas(this.width, this.height, true); // as a side effect, it will clear the canvas
-  } else {
-    returnValue = this._pixelDensity;
+  if (typeof val !== 'number') throw new Error("invalid parameter, must be a number")
+  if (val !== this._pixelDensity) {
+    this._pixelDensity = val;
   }
+  returnValue = this;
+  this.resizeCanvas(this.width * val, this.height * val, true); // as a side effect, it will clear the canvas
+
+  this._renderer.drawingContext.scale(val,val)
   return returnValue;
 };
 
@@ -623,128 +480,8 @@ p5.prototype.pixelDensity = function(val) {
  * @alt
  * 50x50 white ellipse with black outline in center of canvas.
  */
-p5.prototype.displayDensity = () => window.devicePixelRatio;
-
-function launchFullscreen(element) {
-  const enabled =
-    document.fullscreenEnabled ||
-    document.webkitFullscreenEnabled ||
-    document.mozFullScreenEnabled ||
-    document.msFullscreenEnabled;
-  if (!enabled) {
-    throw new Error('Fullscreen not enabled in this browser.');
-  }
-  if (element.requestFullscreen) {
-    element.requestFullscreen();
-  } else if (element.mozRequestFullScreen) {
-    element.mozRequestFullScreen();
-  } else if (element.webkitRequestFullscreen) {
-    element.webkitRequestFullscreen();
-  } else if (element.msRequestFullscreen) {
-    element.msRequestFullscreen();
-  }
+p5.prototype.displayDensity = function () {
+  return this._pixelDensity
 }
-
-function exitFullscreen() {
-  if (document.exitFullscreen) {
-    document.exitFullscreen();
-  } else if (document.mozCancelFullScreen) {
-    document.mozCancelFullScreen();
-  } else if (document.webkitExitFullscreen) {
-    document.webkitExitFullscreen();
-  } else if (document.msExitFullscreen) {
-    document.msExitFullscreen();
-  }
-}
-
-/**
- * Gets the current URL. Note: when using the
- * p5 Editor, this will return an empty object because the sketch
- * is embedded in an iframe. It will work correctly if you view the
- * sketch using the editor's present or share URLs.
- * @method getURL
- * @return {String} url
- * @example
- * <div>
- * <code>
- * let url;
- * let x = 100;
- *
- * function setup() {
- *   fill(0);
- *   noStroke();
- *   url = getURL();
- * }
- *
- * function draw() {
- *   background(200);
- *   text(url, x, height / 2);
- *   x--;
- * }
- * </code>
- * </div>
- *
- * @alt
- * current url (http://p5js.org/reference/#/p5/getURL) moves right to left.
- */
-p5.prototype.getURL = () => location.href;
-/**
- * Gets the current URL path as an array. Note: when using the
- * p5 Editor, this will return an empty object because the sketch
- * is embedded in an iframe. It will work correctly if you view the
- * sketch using the editor's present or share URLs.
- * @method getURLPath
- * @return {String[]} path components
- * @example
- * <div class='norender'><code>
- * function setup() {
- *   let urlPath = getURLPath();
- *   for (let i = 0; i < urlPath.length; i++) {
- *     text(urlPath[i], 10, i * 20 + 20);
- *   }
- * }
- * </code></div>
- *
- * @alt
- * This example does not render anything.
- */
-p5.prototype.getURLPath = () =>
-  location.pathname.split('/').filter(v => v !== '');
-/**
- * Gets the current URL params as an Object. Note: when using the
- * p5 Editor, this will return an empty object because the sketch
- * is embedded in an iframe. It will work correctly if you view the
- * sketch using the editor's present or share URLs.
- * @method getURLParams
- * @return {Object} URL params
- * @example
- * <div class='norender notest'>
- * <code>
- * // Example: http://p5js.org?year=2014&month=May&day=15
- *
- * function setup() {
- *   let params = getURLParams();
- *   text(params.day, 10, 20);
- *   text(params.month, 10, 40);
- *   text(params.year, 10, 60);
- * }
- * </code>
- * </div>
- *
- * @alt
- * This example does not render anything.
- */
-p5.prototype.getURLParams = function() {
-  const re = /[?&]([^&=]+)(?:[&=])([^&=]+)/gim;
-  let m;
-  const v = {};
-  while ((m = re.exec(location.search)) != null) {
-    if (m.index === re.lastIndex) {
-      re.lastIndex++;
-    }
-    v[m[1]] = m[2];
-  }
-  return v;
-};
 
 export default p5;

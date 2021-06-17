@@ -199,9 +199,7 @@ p5.Renderer2D.prototype._getTintedImageCanvas = function(img) {
     return img;
   }
   const pixels = filters._toPixels(img.canvas);
-  const tmpCanvas = document.createElement('canvas');
-  tmpCanvas.width = img.canvas.width;
-  tmpCanvas.height = img.canvas.height;
+  const tmpCanvas = Canvas.createCanvas(img.canvas.width, img.canvas.height)
   const tmpCtx = tmpCanvas.getContext('2d');
   const id = tmpCtx.createImageData(img.canvas.width, img.canvas.height);
   const newPixels = id.data;

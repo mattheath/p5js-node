@@ -6,7 +6,7 @@
  */
 
 import p5 from '../core/main';
-
+import {performance} from 'perf_hooks'
 /**
  * p5.js communicates with the clock on your computer. The <a href="#/p5/day">day()</a> function
  * returns the current day as a value from 1 - 31.
@@ -93,7 +93,7 @@ p5.prototype.millis = function() {
     // Sketch has not started
     return 0;
   } else {
-    return window.performance.now() - this._millisStart;
+    return performance.now() - this._millisStart;
   }
 };
 
