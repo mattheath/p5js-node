@@ -1,5 +1,5 @@
 {
-  "name": "p5",
+  "name": "p5js-node",
   "repository": "flam3rboy/p5.js",
   "scripts": {
     "test": "npm run build && node test/test.js",

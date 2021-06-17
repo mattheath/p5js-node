@@ -1,6 +1,6 @@
-# p5.js-node
+# p5js-node
 
-p5-node a Node.js implementation of the p5.js for drawing to canvas with nodejs. (using ``node-canvas``)
+p5js-node a Node.js implementation of the p5.js for drawing to canvas with nodejs. (using ``node-canvas``)
 
 The [p5js.org](https://p5js.org) website contains an extensive overview of the project, community, documentation, and examples.
 
@@ -13,12 +13,12 @@ Get familiar with p5js: https://p5js.org/get-started
 
 Install p5-node
 ```
-npm i p5-node
+npm i p5js-node
 ```
 
 #### Usage
 ```js
-const p5 = require('p5-node')
+const p5 = require('p5js-node')
 const path = require("path")
 const fs = require("fs");
 
