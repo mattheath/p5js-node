@@ -28,6 +28,9 @@ new p5((p)=>{
 	};
 
 	p.draw = function() {
+		p.background(0);
+		p.fill(255);
+		p.rect(10,10, 50, 50);
 		fs.promises.writeFile(__path.join(__dirname,"..","test.png")__, p.canvas.toBuffer())
 	};
 })
