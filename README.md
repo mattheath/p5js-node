@@ -1,6 +1,6 @@
 # p5js-node
 
-p5js-node a Node.js implementation of the p5.js for drawing to canvas with nodejs. (using ``node-canvas``)
+p5js-node a Node.js implementation of p5.js for drawing to canvas with nodejs. (using ``node-canvas``)
 
 The [p5js.org](https://p5js.org) website contains an extensive overview of the project, community, documentation, and examples.
 
@@ -31,13 +31,15 @@ new p5((p)=>{
 		p.background(0);
 		p.fill(255);
 		p.rect(10,10, 50, 50);
-		fs.promises.writeFile(__path.join(__dirname,"..","test.png")__, p.canvas.toBuffer())
+		fs.promises.writeFile(__path.join(__dirname,"..","test.png"), p.canvas.toBuffer())
 	};
 })
 ```
 
 ## Notice
 This is a fork of p5.js for nodejs which doesn't support all browser apis.
+
+The node-canvas api is documented [here](https://www.npmjs.com/package/canvas).
 
 ### Not supported (*yet)
 * Audio
@@ -54,6 +56,8 @@ This is a fork of p5.js for nodejs which doesn't support all browser apis.
 ### Changes
 
 ```diff
+Canvas:
++ toBuffer({ mimeType: "image/png" || "image/jpeg" || "raw", quality: 1 })
 Environment:
 - describe()
 - describeElement()
