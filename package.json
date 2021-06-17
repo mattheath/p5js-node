@@ -5,12 +5,12 @@
     "test": "npm run build && node test/test.js",
     "build": "tsc -b ."
   },
-  "version": "1.3.3",
+  "version": "1.3.4",
   "devDependencies": {
     "@types/node": "^15.12.2"
   },
   "license": "LGPL-2.1",
-  "main": "./dist/index.js",
+  "main": "./dist/app.js",
   "description": "P5.js port for nodejs canvas",
   "bugs": {
     "url": "https://github.com/flam3rboy/p5.js/issues"
