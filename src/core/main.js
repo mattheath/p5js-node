@@ -5,9 +5,11 @@
  * @requires constants
  */
 
+import './shim';
+
 // Core needs the PVariables object
 import * as constants from './constants';
-import {performance} from 'perf_hooks'
+
 /**
  * This is the p5 instance constructor.
  *
@@ -166,7 +168,7 @@ class p5 {
 
     this._setupDone = false;
     // for handling hidpi
-    this._pixelDensity = 1;
+    this._pixelDensity = Math.ceil(window.devicePixelRatio) || 1;
     this._userNode = node;
     this._curElement = null;
     this._elements = [];
@@ -182,23 +184,23 @@ class p5 {
     };
     this._events = {
       // keep track of user-events for unregistering later
-      mousemove: null,
-      mousedown: null,
-      mouseup: null,
-      dragend: null,
-      dragover: null,
-      click: null,
-      dblclick: null,
-      mouseover: null,
-      mouseout: null,
-      keydown: null,
-      keyup: null,
-      keypress: null,
-      touchstart: null,
-      touchmove: null,
-      touchend: null,
-      resize: null,
-      blur: null
+      mousemove: undefined,
+      mousedown: undefined,
+      mouseup: undefined,
+      dragend: undefined,
+      dragover: undefined,
+      click: undefined,
+      dblclick: undefined,
+      mouseover: undefined,
+      mouseout: undefined,
+      keydown: undefined,
+      keyup: undefined,
+      keypress: undefined,
+      touchstart: undefined,
+      touchmove: undefined,
+      touchend: undefined,
+      resize: undefined,
+      blur: undefined
     };
     this._millisStart = -1;
 
@@ -206,7 +208,7 @@ class p5 {
     this._lcg_random_state = null;
     this._gaussian_previous = false;
 
-    this._events.wheel = null;
+    this._events.wheel = undefined;
     this._loadingScreenId = 'p5_loading';
 
     // Allows methods to be registered on an instance that
@@ -220,17 +222,23 @@ class p5 {
       ].slice();
     }
 
-    this._events.deviceorientation = null;
-    this._events.devicemotion = null;
+    if (window.DeviceOrientationEvent) {
+      this._events.deviceorientation = undefined;
+    }
+    if (window.DeviceMotionEvent && !window._isNodeWebkit) {
+      this._events.devicemotion = undefined;
+    }
 
     this._start = () => {
+      // Find node if id given
+      if (this._userNode) {
+        if (typeof this._userNode === 'string') {
+          this._userNode = document.getElementById(this._userNode);
+        }
+      }
 
-      const context = this;
+      const context = this._isGlobal ? globalThis : this;
       if (context.preload) {
-        // Setup loading screen
-        // Set loading screen into dom if not present
-        // Otherwise displays and removes user provided loading screen
-        
         const methods = this._preloadMethods;
         for (const method in methods) {
           // default to p5 if no object defined
@@ -238,6 +246,10 @@ class p5 {
           let obj = methods[method];
           //it's p5, check if it's global or instance
           if (obj === p5.prototype || obj === p5) {
+            if (this._isGlobal) {
+              window[method] = this._wrapPreload(this, method);
+              globalThis[method] = this._wrapPreload(this, method);
+            }
             obj = this;
           }
           this._registeredPreloadMethods[method] = obj[method];
@@ -253,10 +265,10 @@ class p5 {
     };
 
     this._runIfPreloadsAreDone = function() {
-      const context = this;
+      const context = this._isGlobal ? globalThis : this;
       if (context._preloadCount === 0) {
         if (!this._setupDone) {
-          this._lastFrameTime = performance.now();
+          this._lastFrameTime = window.performance.now();
           context._setup();
           context._draw();
         }
@@ -264,7 +276,7 @@ class p5 {
     };
 
     this._decrementPreload = function() {
-      const context = this;
+      const context = this._isGlobal ? globalThis : this;
       if (typeof context.preload === 'function') {
         context._setProperty('_preloadCount', context._preloadCount - 1);
         context._runIfPreloadsAreDone();
@@ -281,7 +293,7 @@ class p5 {
     };
 
     this._incrementPreload = function() {
-      const context = this;
+      const context = this._isGlobal ? globalThis : this;
       context._setProperty('_preloadCount', context._preloadCount + 1);
     };
 
@@ -289,8 +301,7 @@ class p5 {
       // Always create a default canvas.
       // Later on if the user calls createCanvas, this default one
       // will be replaced
-
-      // * commented out
+      // * changed
       // this.createCanvas(
       //   this._defaultCanvasSize.width,
       //   this._defaultCanvasSize.height,
@@ -298,7 +309,7 @@ class p5 {
       // );
 
       // return preload functions to their normal vals if switched by preload
-      const context = this;
+      const context = this._isGlobal ? globalThis : this;
       if (typeof context.preload === 'function') {
         for (const f in this._preloadMethods) {
           context[f] = this._preloadMethods[f][f];
@@ -309,7 +320,7 @@ class p5 {
       }
 
       // Record the time when sketch starts
-      this._millisStart = performance.now();
+      this._millisStart = window.performance.now();
 
       // Short-circuit on this, in case someone used the library in "global"
       // mode earlier
@@ -317,8 +328,11 @@ class p5 {
         context.setup();
       }
 
+      // unhide any hidden canvases that were created
+      const canvases = document.getElementsByTagName('canvas');
 
-      this._lastFrameTime = performance.now();
+
+      this._lastFrameTime = window.performance.now();
       this._setupDone = true;
       if (this._accessibleOutputs.grid || this._accessibleOutputs.text) {
         this._updateAccsOutput();
@@ -326,7 +340,7 @@ class p5 {
     };
 
     this._draw = () => {
-      const now = performance.now();
+      const now = window.performance.now();
       const time_since_last = now - this._lastFrameTime;
       const target_time_between_frames = 1000 / this._targetFrameRate;
 
@@ -343,7 +357,7 @@ class p5 {
         !this._loop ||
         time_since_last >= target_time_between_frames - epsilon
       ) {
-        //mandatory update values(matrixs and stack)
+        //mandatory update values(matrixes and stack)
         this.redraw();
         this._frameRate = 1000.0 / (now - this._lastFrameTime);
         this.deltaTime = now - this._lastFrameTime;
@@ -367,12 +381,16 @@ class p5 {
       // get notified the next time the browser gives us
       // an opportunity to draw.
       if (this._loop) {
-        this._requestAnimId = setTimeout(this._draw);
+        this._requestAnimId = window.requestAnimationFrame(this._draw);
       }
     };
 
     this._setProperty = (prop, value) => {
       this[prop] = value;
+      if (this._isGlobal) {
+        window[prop] = value;
+        globalThis[prop] = value;
+      }
     };
 
     /**
@@ -401,11 +419,28 @@ class p5 {
      *
      */
     this.remove = () => {
+        // Add 1 to preload counter to prevent the sketch ever executing setup()
+        this._incrementPreload();
       if (this._curElement) {
         // stop draw
         this._loop = false;
         if (this._requestAnimId) {
-          clearTimeout(this._requestAnimId);
+          window.cancelAnimationFrame(this._requestAnimId);
+        }
+
+        // unregister events sketch-wide
+        for (const ev in this._events) {
+          window.removeEventListener(ev, this._events[ev]);
+        }
+
+        // remove DOM elements created by p5, and listeners
+        for (const e of this._elements) {
+          if (e.elt && e.elt.parentNode) {
+            e.elt.parentNode.removeChild(e.elt);
+          }
+          for (const elt_ev in e._events) {
+            e.elt.removeEventListener(elt_ev, e._events[elt_ev]);
+          }
         }
 
         // call any registered remove functions
@@ -415,6 +450,30 @@ class p5 {
             f.call(self);
           }
         });
+      }
+      // remove window bound properties and methods
+      if (this._isGlobal) {
+        for (const p in p5.prototype) {
+          try {
+            delete globalThis[p];
+            delete window[p];
+          } catch (x) {
+            globalThis[p] = undefined;
+            window[p] = undefined;
+          }
+        }
+        for (const p2 in this) {
+          if (this.hasOwnProperty(p2)) {
+            try {
+              delete globalThis[p2];
+              delete window[p2];
+            } catch (x) {
+              globalThis[p2] = undefined;
+              window[p2] = undefined;
+            }
+          }
+        }
+        p5.instance = null;
       }
     };
 
@@ -469,6 +528,27 @@ class p5 {
 
     // Bind events to window (not using container div bc key events don't work)
 
+    for (const e in this._events) {
+      const f = this[`_on${e}`];
+      if (f) {
+        const m = f.bind(this);
+        window.addEventListener(e, m, { passive: false });
+        this._events[e] = m;
+      }
+    }
+
+    // const focusHandler = () => {
+    //   this._setProperty('focused', true);
+    // };
+    // const blurHandler = () => {
+    //   this._setProperty('focused', false);
+    // };
+    // window.addEventListener('focus', focusHandler);
+    // window.addEventListener('blur', blurHandler);
+    // this.registerMethod('remove', () => {
+    //   window.removeEventListener('focus', focusHandler);
+    //   window.removeEventListener('blur', blurHandler);
+    // });
 
       this._start();
   }
@@ -517,7 +597,7 @@ class p5 {
   // can be used in scenarios like unit testing where the window object
   // might not exist
   _createFriendlyGlobalFunctionBinder(options = {}) {
-    const globalObject = options.globalObject || {};
+    const globalObject = options.globalObject || globalThis;
     const log = options.log || console.log.bind(console);
     const propsToForciblyOverwrite = {
       // p5.print actually always overwrites an existing global function,

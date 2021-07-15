@@ -4,11 +4,11 @@
  * @for p5
  */
 
-import Canvas from "node-canvas"
 import p5 from './main';
 import * as constants from './constants';
 import './p5.Graphics';
 import './p5.Renderer2D';
+import '../webgl/p5.RendererGL';
 let defaultId = 'defaultCanvas0'; // this gets set again in createCanvas
 const defaultClass = 'p5Canvas';
 
@@ -55,16 +55,59 @@ const defaultClass = 'p5Canvas';
 p5.prototype.createCanvas = function(w, h, renderer) {
   p5._validateParameters('createCanvas', arguments);
   //optional: renderer, otherwise defaults to p2d
-  const r = constants.P2D
+  const r = renderer || constants.P2D;
+  let c;
 
-  //P2D mode
-  if (!this._defaultGraphicsCreated) {
-    this.canvas = Canvas.createCanvas(w, h);
-    this._setProperty('_renderer', new p5.Renderer2D(this.canvas, this, true));
-    this._defaultGraphicsCreated = true;
+  if (r === constants.WEBGL) {
+    c = this.canvas
+    if (c) {
+      //if defaultCanvas already exists
+      c.parentNode.removeChild(c); //replace the existing defaultCanvas
+      const thisRenderer = this._renderer;
+      this._elements = this._elements.filter(e => e !== thisRenderer);
+    }
+    c = document.createElement('canvas');
+  } else {
+    if (!this._defaultGraphicsCreated) {
+      c = document.createElement('canvas');
+    } else {
+      // resize the default canvas if new one is created
+      c = this.canvas;
+    }
+  }
+
+  // set to invisible if still in setup (to prevent flashing with manipulate)
+  if (!this._setupDone) {
+    // c.dataset.hidden = true; // tag to show later
+    // c.style.visibility = 'hidden';
+  }
+
+  if (this._userNode) {
+    // user input node case
+    this._userNode.appendChild(c);
+  } else {
+    //create main element
+    if (document.getElementsByTagName('main').length === 0) {
+      let m = document.createElement('main');
+      document.body.appendChild(m);
+    }
+    //append canvas to main
+    document.getElementsByTagName('main')[0].appendChild(c);
+  }
+
+  // Init our graphics renderer
+  //webgl mode
+  if (r === constants.WEBGL) {
+    this._setProperty('_renderer', new p5.RendererGL(c, this, true));
     this._elements.push(this._renderer);
-  } 
-
+  } else {
+    //P2D mode
+    if (!this._defaultGraphicsCreated) {
+      this._setProperty('_renderer', new p5.Renderer2D(c, this, true));
+      this._defaultGraphicsCreated = true;
+      this._elements.push(this._renderer);
+    }
+  }
   this._renderer.resize(w, h);
   this._renderer._applyDefaults();
   return this._renderer;
@@ -128,6 +171,26 @@ p5.prototype.resizeCanvas = function(w, h, noRedraw) {
   }
 };
 
+/**
+ * Removes the default canvas for a p5 sketch that doesn't require a canvas
+ * @method noCanvas
+ * @example
+ * <div>
+ * <code>
+ * function setup() {
+ *   noCanvas();
+ * }
+ * </code>
+ * </div>
+ *
+ * @alt
+ * no image displayed
+ */
+p5.prototype.noCanvas = function() {
+  if (this.canvas) {
+    this.canvas.parentNode.removeChild(this.canvas);
+  }
+};
 
 /**
  * Creates and returns a new p5.Renderer object. Use this class if you need

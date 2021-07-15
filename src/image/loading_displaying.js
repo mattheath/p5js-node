@@ -10,7 +10,6 @@ import Filters from './filters';
 import canvas from '../core/helpers';
 import * as constants from '../core/constants';
 import omggif from 'omggif';
-import Canvas from 'node-canvas'
 
 import '../core/friendly_errors/validate_params';
 import '../core/friendly_errors/file_errors';
@@ -446,7 +445,7 @@ p5.prototype.image = function(
   // and https://github.com/processing/p5.js/issues/1673
   let pd = 1;
 
-  if (img.elt && !img.canvas && img.elt.width) {
+  if (img.elt && !img.canvas && img.elt.style.width) {
     //if img is video and img.elt.size() has been used and
     //no width passed to image()
     if (img.elt.videoWidth && !dWidth) {
@@ -455,7 +454,7 @@ p5.prototype.image = function(
       //all other cases
       pd = img.elt.width;
     }
-    pd /= parseInt(img.elt.width, 10);
+    pd /= parseInt(img.elt.style.width, 10);
   }
 
   _sx *= pd;
@@ -608,7 +607,9 @@ p5.prototype._getTintedImageCanvas = function(img) {
     return img;
   }
   const pixels = Filters._toPixels(img.canvas);
-  const tmpCanvas = Canvas.createCanvas(img.canvas.width,img.canvas.height);
+  const tmpCanvas = document.createElement('canvas');
+  tmpCanvas.width = img.canvas.width;
+  tmpCanvas.height = img.canvas.height;
   const tmpCtx = tmpCanvas.getContext('2d');
   const id = tmpCtx.createImageData(img.canvas.width, img.canvas.height);
   const newPixels = id.data;

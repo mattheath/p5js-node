@@ -25,7 +25,9 @@ import * as constants from './constants';
 p5.Graphics = function(w, h, renderer, pInst) {
   const r = renderer || constants.P2D;
 
-  this.canvas = Canvas.createCanvas(w,h)
+  this.canvas = document.createElement('canvas');
+  const node = pInst._userNode || document.body;
+  node.appendChild(this.canvas);
 
   p5.Element.call(this, this.canvas, pInst);
 
@@ -45,7 +47,11 @@ p5.Graphics = function(w, h, renderer, pInst) {
   this.height = h;
   this._pixelDensity = pInst._pixelDensity;
 
-  this._renderer = new p5.Renderer2D(this.canvas, this, false);
+  if (r === constants.WEBGL) {
+    this._renderer = new p5.RendererGL(this.canvas, this, false);
+  } else {
+    this._renderer = new p5.Renderer2D(this.canvas, this, false);
+  }
   pInst._elements.push(this);
 
   Object.defineProperty(this, 'deltaTime', {

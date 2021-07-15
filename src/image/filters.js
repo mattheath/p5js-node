@@ -14,7 +14,6 @@
  * http://www.html5rocks.com/en/tutorials/canvas/imagefilters/
  * or the java processing implementation.
  */
-import Canvas from "node-canvas"
 
 const Filters = {};
 
@@ -129,7 +128,7 @@ Filters._toImageData = function(canvas) {
  * @return {ImageData}
  */
 Filters._createImageData = function(width, height) {
-  Filters._tmpCanvas = Canvas.createCanvas(width, height)
+  Filters._tmpCanvas = document.createElement('canvas');
   Filters._tmpCtx = Filters._tmpCanvas.getContext('2d');
   return this._tmpCtx.createImageData(width, height);
 };

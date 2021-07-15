@@ -12,7 +12,6 @@
  */
 
 import p5 from '../core/main';
-import Canvas from "node-canvas"
 import Filters from './filters';
 
 /*
@@ -140,7 +139,9 @@ p5.Image = function(width, height) {
    *
    */
   this.height = height;
-  this.canvas = Canvas.createCanvas(this.width, this.height)
+  this.canvas = document.createElement('canvas');
+  this.canvas.width = this.width;
+  this.canvas.height = this.height;
   this.drawingContext = this.canvas.getContext('2d');
   this._pixelsState = this;
   this._pixelDensity = 1;
@@ -486,7 +487,9 @@ p5.Image.prototype.resize = function(width, height) {
   width = Math.floor(width);
   height = Math.floor(height);
 
-  const tempCanvas = Canvas.createCanvas(width,height)
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = width;
+  tempCanvas.height = height;
 
   if (this.gifProperties) {
     const props = this.gifProperties;

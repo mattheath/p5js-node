@@ -90,7 +90,8 @@ const EDIT_DIST_THRESHOLD = 2;
 // to enable or disable styling (color, font-size, etc. ) for fes messages
 const ENABLE_FES_STYLING = false;
 
-p5._friendlyError = p5._checkForUserDefinedFunctions = p5._fesErrorMonitor = () => {};
+  p5._friendlyError = p5._checkForUserDefinedFunctions = p5._fesErrorMonitor = () => {};
+
 
 // This is a lazily-defined list of p5 symbols that may be
 // misused by beginners at top-level code, outside of setup/draw. We'd like
@@ -190,7 +191,7 @@ const helpForMisusedAtTopLevelCode = (e, log) => {
         );
       } else {
         log(
-         symbolName
+        'fes.misusedTopLevel'
         );
       }
       return true;
@@ -201,6 +202,16 @@ const helpForMisusedAtTopLevelCode = (e, log) => {
 // Exposing this primarily for unit testing.
 p5.prototype._helpForMisusedAtTopLevelCode = helpForMisusedAtTopLevelCode;
 
+if (document.readyState !== 'complete') {
+  window.addEventListener('error', helpForMisusedAtTopLevelCode, false);
 
+  // Our job is only to catch ReferenceErrors that are thrown when
+  // global (non-instance mode) p5 APIs are used at the top-level
+  // scope of a file, so we'll unbind our error listener now to make
+  // sure we don't log false positives later.
+  window.addEventListener('load', () => {
+    window.removeEventListener('error', helpForMisusedAtTopLevelCode, false);
+  });
+}
 
 export default p5;

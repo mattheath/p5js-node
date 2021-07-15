@@ -465,7 +465,7 @@ p5.prototype.redraw = function(n) {
     numberOfRedraws = 1;
   }
 
-  const context = this;
+  const context = this._isGlobal ? globalThis : this;
   if (typeof context.draw === 'function') {
     if (typeof context.setup === 'undefined') {
       context.scale(context._pixelDensity, context._pixelDensity);

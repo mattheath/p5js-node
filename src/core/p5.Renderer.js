@@ -32,6 +32,7 @@ p5.Renderer = function(elt, pInst, isMainCanvas) {
     this._pInst._setProperty('height', this.height);
   } else {
     // hide if offscreen buffer by default
+    this.canvas.style.display = 'none';
     this._styles = []; // non-main elt styles stored in p5.Renderer
   }
 
@@ -103,7 +104,8 @@ p5.Renderer.prototype.resize = function(w, h) {
   this.height = h;
   this.elt.width = w * this._pInst._pixelDensity;
   this.elt.height = h * this._pInst._pixelDensity;
-  
+  this.elt.style.width = `${w}px`;
+  this.elt.style.height = `${h}px`;
   if (this._isMainCanvas) {
     this._pInst._setProperty('width', this.width);
     this._pInst._setProperty('height', this.height);
@@ -365,8 +367,47 @@ p5.Renderer.prototype._isOpenType = function(f = this._textFont) {
 };
 
 p5.Renderer.prototype._updateTextMetrics = function() {
-  this._setProperty('_textAscent', this._textFont._textAscent());
-  this._setProperty('_textDescent', this._textFont._textDescent());
+  if (this._isOpenType()) {
+    this._setProperty('_textAscent', this._textFont._textAscent());
+    this._setProperty('_textDescent', this._textFont._textDescent());
+    return this;
+  }
+
+  // Adapted from http://stackoverflow.com/a/25355178
+  const text = document.createElement('span');
+  text.style.fontFamily = this._textFont;
+  text.style.fontSize = `${this._textSize}px`;
+  text.innerHTML = 'ABCjgq|';
+
+  const block = document.createElement('div');
+  block.style.display = 'inline-block';
+  block.style.width = '1px';
+  block.style.height = '0px';
+
+  const container = document.createElement('div');
+  container.appendChild(text);
+  container.appendChild(block);
+
+  container.style.height = '0px';
+  container.style.overflow = 'hidden';
+  document.body.appendChild(container);
+
+  block.style.verticalAlign = 'baseline';
+  let blockOffset = calculateOffset(block);
+  let textOffset = calculateOffset(text);
+  const ascent = blockOffset[1] - textOffset[1];
+
+  block.style.verticalAlign = 'bottom';
+  blockOffset = calculateOffset(block);
+  textOffset = calculateOffset(text);
+  const height = blockOffset[1] - textOffset[1];
+  const descent = height - ascent;
+
+  document.body.removeChild(container);
+
+  this._setProperty('_textAscent', ascent);
+  this._setProperty('_textDescent', descent);
+
   return this;
 };
 

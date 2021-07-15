@@ -7,6 +7,7 @@
  */
 import p5 from '../main';
 
-p5._friendlyFileLoadError = () => {};
+  p5._friendlyFileLoadError = () => {};
+
 
 export default p5;

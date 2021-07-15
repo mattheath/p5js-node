@@ -40,8 +40,75 @@ p5.Element = function(elt, pInst) {
   this.elt = elt;
   this._pInst = this._pixelsState = pInst;
   this._events = {};
-  this.width = this.elt?.offsetWidth;
-  this.height = this.elt?.offsetHeight;
+  this.width = this.elt.offsetWidth;
+  this.height = this.elt.offsetHeight;
+};
+
+/**
+ *
+ * Attaches the element to the parent specified. A way of setting
+ * the container for the element. Accepts either a string ID, DOM
+ * node, or <a href="#/p5.Element">p5.Element</a>. If no arguments given, parent node is returned.
+ * For more ways to position the canvas, see the
+ * <a href='https://github.com/processing/p5.js/wiki/Positioning-your-canvas'>
+ * positioning the canvas</a> wiki page.
+ *
+ * @method parent
+ * @param  {String|p5.Element|Object} parent the ID, DOM node, or <a href="#/p5.Element">p5.Element</a>
+ *                         of desired parent element
+ * @chainable
+ *
+ * @example
+ * <div class="norender notest"><code>
+ * // Add the following comment to html file.
+ * // &lt;div id="myContainer">&lt;/div>
+ *
+ * // The js code
+ * let cnv = createCanvas(100, 100);
+ * cnv.parent('myContainer');
+ * </code></div>
+ *
+ * <div class='norender'><code>
+ * let div0 = createDiv('this is the parent');
+ * let div1 = createDiv('this is the child');
+ * div1.parent(div0); // use p5.Element
+ * </code></div>
+ *
+ * <div class='norender'><code>
+ * let div0 = createDiv('this is the parent');
+ * div0.id('apples');
+ * let div1 = createDiv('this is the child');
+ * div1.parent('apples'); // use id
+ * </code></div>
+ *
+ * <div class='norender notest'><code>
+ * let elt = document.getElementById('myParentDiv');
+ * let div1 = createDiv('this is the child');
+ * div1.parent(elt); // use element from page
+ * </code></div>
+ *
+ * @alt
+ * no display.
+ */
+/**
+ * @method parent
+ * @return {p5.Element}
+ */
+p5.Element.prototype.parent = function(p) {
+  if (typeof p === 'undefined') {
+    return this.elt.parentNode;
+  }
+
+  if (typeof p === 'string') {
+    if (p[0] === '#') {
+      p = p.substring(1);
+    }
+    p = document.getElementById(p);
+  } else if (p instanceof p5.Element) {
+    p = p.elt;
+  }
+  p.appendChild(this.elt);
+  return this;
 };
 
 /**
@@ -747,11 +814,13 @@ p5.Element._attachListener = function(ev, fxn, ctx) {
     p5.Element._detachListener(ev, ctx);
   }
   const f = fxn.bind(ctx);
+  ctx.elt.addEventListener(ev, f, false);
   ctx._events[ev] = f;
 };
 
 p5.Element._detachListener = function(ev, ctx) {
   const f = ctx._events[ev];
+  ctx.elt.removeEventListener(ev, f, false);
   ctx._events[ev] = null;
 };
 
