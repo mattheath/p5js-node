@@ -14,9 +14,9 @@
   "types": "types/index.d.ts",
   "description": "P5.js port for nodejs canvas",
   "bugs": {
-    "url": "https://github.com/flam3rboy/p5.js/issues"
+    "url": "https://github.com/flam3rboy/p5js-node/issues"
   },
-  "homepage": "https://github.com/flam3rboy/p5.js#readme",
+  "homepage": "https://github.com/flam3rboy/p5js-node#readme",
   "dependencies": {
     "@types/p5": "^1.3.0",
     "libtess": "^1.2.2",
